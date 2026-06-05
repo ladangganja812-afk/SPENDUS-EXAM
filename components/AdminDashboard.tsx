@@ -2856,18 +2856,18 @@ ANS: B`;
       
       if (mappingSchoolFilter !== 'ALL') filtered = filtered.filter(u => u.school === mappingSchoolFilter);
       if (mappingClassFilter !== 'ALL') filtered = filtered.filter(u => u.class === mappingClassFilter);
+      if (mappingRoomFilter !== 'ALL') {
+          if (mappingRoomFilter === 'NONE') {
+              filtered = filtered.filter(u => !u.room);
+          } else {
+              filtered = filtered.filter(u => u.room === mappingRoomFilter);
+          }
+      }
 
-      // Filter by room/session from mappings
-      if (mappingRoomFilter !== 'ALL' || mappingSessionFilter !== 'ALL' || mappingEditForm.examId) {
+      // Filter by session from mappings
+      if (mappingSessionFilter !== 'ALL' || mappingEditForm.examId) {
           filtered = filtered.filter(u => {
               const m = u.mappings?.find(map => !mappingEditForm.examId || map.examId === mappingEditForm.examId);
-
-              // Handle Room Filter
-              if (mappingRoomFilter === 'NONE') {
-                  if (m && m.room) return false;
-              } else if (mappingRoomFilter !== 'ALL') {
-                  if (!m || m.room !== mappingRoomFilter) return false;
-              }
 
               // Handle Session Filter
               if (mappingSessionFilter !== 'ALL') {
