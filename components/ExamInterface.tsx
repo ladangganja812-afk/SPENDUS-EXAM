@@ -982,6 +982,17 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
 
           <div className="flex justify-end gap-2 w-auto md:flex-1 order-2 md:order-3">
             <button
+               onClick={() => {
+                 const iframe = document.querySelector('iframe');
+                 if (iframe) iframe.src = iframe.src;
+               }}
+               className="text-gray-600 px-3 md:px-4 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2 active:scale-95 text-sm md:text-base border border-gray-300 hover:bg-gray-100"
+               title="Refresh Form"
+            >
+               <RefreshCcw size={18} />
+               <span className="hidden md:inline">Refresh Form</span>
+            </button>
+            <button
               onClick={() => {
                 if (
                   confirm(
@@ -1784,61 +1795,63 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
             </button>
           </div>
 
-          {currentQuestionIndex === activeQuestions.length - 1 ? (
-            <button
-              onClick={() => {
-                if (!canGoNext) return;
-                const antiSubmitSeconds =
-                  (settings.antiCheat.antiSubmitTime || 0) * 60;
-                if (
-                  settings.antiCheat.antiSubmitEnabled &&
-                  timeLeft > antiSubmitSeconds
-                ) {
-                  return;
+          <div className="flex justify-end gap-2 flex-1 md:flex-none">
+            {currentQuestionIndex === activeQuestions.length - 1 ? (
+              <button
+                onClick={() => {
+                  if (!canGoNext) return;
+                  const antiSubmitSeconds =
+                    (settings.antiCheat.antiSubmitTime || 0) * 60;
+                  if (
+                    settings.antiCheat.antiSubmitEnabled &&
+                    timeLeft > antiSubmitSeconds
+                  ) {
+                    return;
+                  }
+                  setShowConfirmFinishModal(true);
+                }}
+                disabled={
+                  (settings.antiCheat.antiSubmitEnabled &&
+                    timeLeft > (settings.antiCheat.antiSubmitTime || 0) * 60) ||
+                  !canGoNext
                 }
-                setShowConfirmFinishModal(true);
-              }}
-              disabled={
-                (settings.antiCheat.antiSubmitEnabled &&
-                  timeLeft > (settings.antiCheat.antiSubmitTime || 0) * 60) ||
-                !canGoNext
-              }
-              className="flex items-center justify-center px-2 md:px-4 py-2 text-white rounded font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex-1 md:flex-none text-xs md:text-base"
-              style={{ backgroundColor: themeColor }}
-            >
-              {settings.antiCheat.antiSubmitEnabled &&
-              timeLeft > (settings.antiCheat.antiSubmitTime || 0) * 60 ? (
-                <span className="flex items-center">
-                  <Clock size={14} className="mr-1 md:mr-2 animate-pulse" />
-                  <span className="hidden md:inline">Tunggu</span>{" "}
-                  {formatTime(
-                    timeLeft - (settings.antiCheat.antiSubmitTime || 0) * 60,
-                  )}
-                </span>
-              ) : (
-                <>
-                  Selesai <ChevronRight size={16} className="ml-1" />
-                </>
-              )}
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                if (canGoNext) {
-                  setCurrentQuestionIndex((prev) =>
-                    Math.min(activeQuestions.length - 1, prev + 1),
-                  );
-                }
-              }}
-              disabled={!canGoNext}
-              className="flex items-center justify-center px-2 md:px-4 py-2 text-white rounded font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex-1 md:flex-none text-xs md:text-base"
-              style={{ backgroundColor: themeColor }}
-            >
-              <span className="hidden md:inline">Soal berikutnya</span>
-              <span className="md:hidden">Berikutnya</span>{" "}
-              <ChevronRight size={16} className="ml-1" />
-            </button>
-          )}
+                className="flex items-center justify-center px-2 md:px-4 py-2 text-white rounded font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-base"
+                style={{ backgroundColor: themeColor }}
+              >
+                {settings.antiCheat.antiSubmitEnabled &&
+                timeLeft > (settings.antiCheat.antiSubmitTime || 0) * 60 ? (
+                  <span className="flex items-center">
+                    <Clock size={14} className="mr-1 md:mr-2 animate-pulse" />
+                    <span className="hidden md:inline">Tunggu</span>{" "}
+                    {formatTime(
+                      timeLeft - (settings.antiCheat.antiSubmitTime || 0) * 60,
+                    )}
+                  </span>
+                ) : (
+                  <>
+                    Selesai <ChevronRight size={16} className="ml-1" />
+                  </>
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (canGoNext) {
+                    setCurrentQuestionIndex((prev) =>
+                      Math.min(activeQuestions.length - 1, prev + 1),
+                    );
+                  }
+                }}
+                disabled={!canGoNext}
+                className="flex items-center justify-center px-2 md:px-4 py-2 text-white rounded font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-base"
+                style={{ backgroundColor: themeColor }}
+              >
+                <span className="hidden md:inline">Soal berikutnya</span>
+                <span className="md:hidden">Berikutnya</span>{" "}
+                <ChevronRight size={16} className="ml-1" />
+              </button>
+            )}
+          </div>
         </div>
       </footer>
 
