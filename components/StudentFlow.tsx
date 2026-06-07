@@ -158,11 +158,7 @@ export const StudentFlow: React.FC<StudentFlowProps> = ({ user, onStartExam, onL
         return;
     }
 
-    // Validate Token
-    if (inputToken.toUpperCase() !== selectedExam.token) {
-        showToast("Token Salah! Silakan hubungi pengawas/admin untuk token yang benar.", 'error');
-        return;
-    }
+
 
     setStep('TEST_CONFIRM');
   };
@@ -366,7 +362,7 @@ export const StudentFlow: React.FC<StudentFlowProps> = ({ user, onStartExam, onL
             <main className="relative z-10 max-w-6xl mx-auto w-full mt-4 flex flex-col md:flex-row gap-6 px-4 pb-12">
                  <div className="w-full md:w-1/3 space-y-4">
                     <div className="bg-white rounded shadow-md p-4 flex items-center justify-between border-l-4 animate-in slide-in-from-left-4 duration-500" style={{ borderColor: settings.themeColor }}>
-                        <div><p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Status Token</p><div className="flex items-center space-x-2"><div className={`h-2 w-2 rounded-full ${isRefreshing ? 'bg-yellow-400 animate-pulse' : 'bg-green-500'}`}></div><p className="text-sm font-bold text-gray-700">{isRefreshing ? 'Memuat...' : (settings.showTokenToStudents && selectedExam ? selectedExam.token : 'Aktif')}</p></div></div>
+                        <div><p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Status Server</p><div className="flex items-center space-x-2"><div className={`h-2 w-2 rounded-full ${isRefreshing ? 'bg-yellow-400 animate-pulse' : 'bg-green-500'}`}></div><p className="text-sm font-bold text-gray-700">{isRefreshing ? 'Memuat...' : 'Terhubung'}</p></div></div>
                         <button onClick={handleRefresh} className="text-white px-3 py-1.5 text-xs font-bold rounded hover:opacity-90 transition flex items-center shadow-sm" style={{ backgroundColor: settings.themeColor }}><RefreshCcw size={12} className={`mr-1 ${isRefreshing ? 'animate-spin' : ''}`} /> Refresh</button>
                     </div>
                     <button onClick={() => setStep('DASHBOARD')} className="w-full py-2 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 font-bold text-sm">Kembali ke Menu</button>
@@ -379,7 +375,7 @@ export const StudentFlow: React.FC<StudentFlowProps> = ({ user, onStartExam, onL
                           <div className="grid grid-cols-1 md:grid-cols-3 md:items-center gap-1"><label className="font-bold text-gray-700">Mata Ujian</label><div className="md:col-span-2 text-gray-600 bg-gray-50 p-2 rounded border border-gray-100">{selectedExam.title}</div></div>
                           <div className="border-t my-2 border-gray-100"></div>
                           <div className="grid grid-cols-1 md:grid-cols-3 md:items-center gap-1 mt-2"><label className="font-bold text-gray-700">Ketik Nama</label><input className="md:col-span-2 border rounded p-2.5 focus:ring-2 w-full outline-none transition uppercase font-bold" style={{ '--tw-ring-color': settings.themeColor } as React.CSSProperties} placeholder="Ketikkan Nama Peserta" value={inputName} onChange={e => setInputName(e.target.value.toUpperCase())}/></div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 md:items-center gap-1 mt-2 bg-blue-50 p-3 rounded border border-blue-100"><label className="font-bold text-gray-700">Token</label><div className="md:col-span-2"><input className="border rounded p-2.5 focus:ring-2 w-full uppercase font-mono tracking-widest text-lg font-bold" style={{ '--tw-ring-color': settings.themeColor } as React.CSSProperties} placeholder="Ketikkan token" maxLength={6} value={inputToken} onChange={e => setInputToken(e.target.value.toUpperCase())}/><p className="text-xs text-gray-500 mt-1 italic">*Token didapat dari proktor</p></div></div>
+{/* Token removed */}
                       </div>
                       <button onClick={handleSubmitData} className="w-full text-white font-bold py-3.5 rounded mt-8 shadow-md hover:shadow-lg transition transform active:scale-95" style={{ backgroundColor: settings.themeColor }}>Submit</button>
                  </div>
@@ -410,7 +406,7 @@ export const StudentFlow: React.FC<StudentFlowProps> = ({ user, onStartExam, onL
                        <div className="space-y-4 text-sm bg-gray-50 p-4 rounded-lg border border-gray-100">
                            <div className="flex justify-between border-b border-gray-200 pb-2"><span className="font-bold text-gray-500">Nama Tes</span><span className="font-bold text-gray-800">{selectedExam.title}</span></div>
                            <div className="flex justify-between border-b border-gray-200 pb-2"><span className="font-bold text-gray-500">Durasi</span><span className="font-bold text-gray-800">{selectedExam.durationMinutes} Menit</span></div>
-                           <div className="flex justify-between"><span className="font-bold text-gray-500">Token</span><span className="font-bold text-gray-800 font-mono tracking-wider">{selectedExam.token}</span></div>
+{/* Token removed from modal */}
                        </div>
                        <div className="flex gap-2 mt-8">
                            <button onClick={() => setStep('DATA_CONFIRM')} className="flex-1 border border-gray-300 text-gray-600 font-bold py-3.5 rounded-full shadow-sm hover:bg-gray-50">Batal</button>

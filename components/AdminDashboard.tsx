@@ -410,10 +410,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout, 
   const [mappingEditForm, setMappingEditForm] = useState({ examId: '', examDate: '', endDate: '', room: '', session: '' });
   const [mappingMode, setMappingMode] = useState<'OBT' | 'TRYOUT'>('OBT');
   const [isMappingAccordionOpen, setIsMappingAccordionOpen] = useState(true);
+  const [selectedMappingKeys, setSelectedMappingKeys] = useState<string[]>([]);
 
   // Helper for Mapping History
   const getMappingHistory = () => {
     const history: Record<string, {
+      key: string,
       date: string,
       session: string,
       examId: string,
@@ -430,6 +432,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout, 
             history[key].count++;
           } else {
             history[key] = {
+              key,
               date: m.examDate,
               session: m.session,
               examId: m.examId,
@@ -725,6 +728,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout, 
       });
       onSettingsChange();
       showToast("Teks, Tema warna, logo, dan footer berhasil disimpan!");
+  };
+
+  const handleDeleteBulkMappingGroups = async () => {
+      if (selectedMappingKeys.length === 0) return;
+      showConfirm(`Apakah Anda yakin ingin menghapus ${selectedMappingKeys.length} riwayat mapping terpilih?`, async () => {
+          try {
+              let mappingCount = 0;
+              for (const key of selectedMappingKeys) {
+                  const [date, session, examId, school, room] = key.split('|');
+                  const studentIds = users
+                      .filter(u => 
+                          u.role === UserRole.STUDENT && 
+                          u.school === school &&
+                          u.mappings?.some(m => 
+                              m.examId === examId &&
+                              m.examDate === date &&
+                              m.session === session &&
+                              m.room === room
+                          )
+                      )
+                      .map(u => u.id);
+                  if (studentIds.length > 0) {
+                      await db.deleteStudentMappingBatch(studentIds, examId, date, session, room);
+                      mappingCount++;
+                  }
+              }
+              setSelectedMappingKeys([]);
+              loadData();
+              showToast(`${mappingCount} kelompok mapping berhasil dihapus.`, 'success');
+          } catch (error: any) {
+              showToast("Gagal hapus bulk mapping: " + error.message, 'error');
+          }
+      });
+  };
+
+  const handleToggleSelectMapping = (key: string) => {
+      setSelectedMappingKeys(prev => 
+          prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+      );
+  };
+
+  const handleSelectAllMappings = () => {
+      const history = getMappingHistory();
+      if (selectedMappingKeys.length === history.length) {
+          setSelectedMappingKeys([]);
+      } else {
+          setSelectedMappingKeys(history.map(h => h.key));
+      }
   };
 
   const handleDeleteMappingGroup = async (group: any) => {
@@ -1222,11 +1273,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout, 
 
   const handleSaveMapping = async () => {
       if (!editingExam) return;
-      if (editToken.length < 3) return showToast("Token minimal 3 karakter", 'error');
       
       await db.updateExamMapping(
           editingExam.id, 
-          editToken.toUpperCase(), 
+          editingExam.token, 
           editDuration,
           editDate,
           editSession,
@@ -2214,7 +2264,7 @@ ANS: B`;
           <head><meta charset='utf-8'><title>${exam.title}</title></head>
           <body>
               <h1>${exam.title}</h1>
-              <p>Token: ${exam.token} | Durasi: ${exam.durationMinutes} Menit</p>
+              <p>Durasi: ${exam.durationMinutes} Menit</p>
               <hr/>
       `;
 
@@ -2345,7 +2395,7 @@ ANS: B`;
               
               <div class="meta">
                   <span>Mata Pelajaran: ${exam.subject}</span>
-                  <span>Token: ${exam.token}</span>
+                  
               </div>
       `;
 
@@ -3642,40 +3692,14 @@ ANS: B`;
                                >
                                    <option value="">-- Pilih Mapel --</option>
                                    {exams.map(ex => (
-                                       <option key={ex.id} value={ex.id}>{ex.title} (Token: {ex.token})</option>
+                                       <option key={ex.id} value={ex.id}>{ex.title}</option>
                                    ))}
                                </select>
                            </div>
                        </div>
                        {monitoringExamId && (
                            <div className="mt-3 flex flex-col md:flex-row md:items-center gap-4 text-sm">
-                               <div className="flex items-center gap-2">
-                                   <span className="text-gray-600">Token Aktif:</span>
-                                   <span className="font-mono font-bold text-xl bg-white px-3 py-1 rounded border border-blue-200 text-blue-700 tracking-widest">
-                                       {exams.find(e => e.id === monitoringExamId)?.token || '-'}
-                                   </span>
-                                   {(user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN) && (
-                                       <button 
-                                           onClick={() => handleGenerateNewToken(monitoringExamId)}
-                                           className="p-2 bg-white border border-blue-200 rounded-lg text-blue-600 hover:bg-blue-50 transition shadow-sm"
-                                           title="Generate Token Baru"
-                                       >
-                                           <RotateCcw size={16} />
-                                       </button>
-                                   )}
-                               </div>
-                               <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded border border-blue-200 shadow-sm">
-                                   <input 
-                                       type="checkbox" 
-                                       id="sendToStudents"
-                                       className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                                       checked={settings.showTokenToStudents || false}
-                                       onChange={(e) => handleToggleTokenVisibility(e.target.checked)}
-                                   />
-                                   <label htmlFor="sendToStudents" className="text-xs font-bold text-blue-800 cursor-pointer select-none">
-                                       Kirim ke Peserta
-                                   </label>
-                                </div>
+                               {/* Token UI Removed */}
                                 <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded border border-blue-200 shadow-sm">
                                    <input 
                                        type="checkbox" 
@@ -4147,7 +4171,6 @@ ANS: B`;
                                                   </div>
                                                   </div>
                                                   <h4 className="font-bold text-gray-800 text-lg mb-1">{ex.subject.replace(/^[789]_/, '')}</h4>
-                                                  <p className="text-sm text-gray-500 line-clamp-1">Token: {ex.token}</p>
                                                   {ex.formUrl && (
                                                       <span className="inline-block mt-2 text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-1 rounded">
                                                           🔗 Form Eksternal Aktif
@@ -4393,15 +4416,33 @@ ANS: B`;
 
                   {/* DAFTAR RIWAYAT MAPPING */}
                   <div className="bg-white rounded-xl shadow-sm border p-6">
-                      <div className="flex items-center mb-6">
-                          <History size={20} className="mr-2 text-purple-600"/>
-                          <h3 className="font-bold text-lg">Daftar Riwayat Mapping</h3>
+                      <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center">
+                              <History size={20} className="mr-2 text-purple-600"/>
+                              <h3 className="font-bold text-lg">Daftar Riwayat Mapping</h3>
+                          </div>
+                          {selectedMappingKeys.length > 0 && (
+                              <button
+                                  onClick={handleDeleteBulkMappingGroups}
+                                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition flex items-center"
+                              >
+                                  <Trash2 size={16} className="mr-2" /> Hapus Terpilih ({selectedMappingKeys.length})
+                              </button>
+                          )}
                       </div>
 
                       <div className="overflow-x-auto border rounded-xl">
                           <table className="w-full text-sm text-left">
                               <thead className="bg-gray-50 font-bold border-b text-gray-600">
                                   <tr>
+                                      <th className="p-3 w-10 text-center">
+                                          <input 
+                                              type="checkbox" 
+                                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                              checked={selectedMappingKeys.length > 0 && selectedMappingKeys.length === getMappingHistory().length}
+                                              onChange={handleSelectAllMappings}
+                                          />
+                                      </th>
                                       <th className="p-3">Hari / Tanggal</th>
                                       <th className="p-3">Sesi / Waktu</th>
                                       <th className="p-3">Mata Pelajaran</th>
@@ -4432,6 +4473,14 @@ ANS: B`;
                                       
                                       return (
                                           <tr key={idx} className="hover:bg-gray-50">
+                                              <td className="p-3 text-center">
+                                                  <input 
+                                                      type="checkbox" 
+                                                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                                      checked={selectedMappingKeys.includes(h.key)}
+                                                      onChange={() => handleToggleSelectMapping(h.key)}
+                                                  />
+                                              </td>
                                               <td className="p-3">
                                                   <div className="font-bold text-gray-800">{dayName}</div>
                                                   <div className="text-xs text-gray-500">{formattedDate}</div>
@@ -6223,24 +6272,7 @@ ANS: B`;
 
                   <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
                       {/* Token & Schedule Section */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                           {/* Left Column: Token */}
-                           <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Token Ujian</label>
-                                    <div className="flex gap-2">
-                                        <div className="relative flex-1">
-                                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16}/>
-                                            <input 
-                                                className="border-2 border-gray-300 rounded-lg py-2 pl-9 pr-2 w-full font-mono uppercase font-bold text-lg tracking-wider focus:border-blue-500 focus:outline-none transition text-center" 
-                                                value={editToken} 
-                                                onChange={e => setEditToken(e.target.value.toUpperCase())}
-                                            />
-                                        </div>
-                                        <button onClick={() => setEditToken(Math.random().toString(36).substring(2,8).toUpperCase())} className="bg-white border-2 border-gray-300 hover:border-blue-400 hover:text-blue-600 px-3 rounded-lg transition"><Shuffle size={20}/></button>
-                                    </div>
-                                </div>
-                                
+                      <div className="grid grid-cols-1 gap-6 mb-6">
                                 <div>
                                     <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Link Eksternal Ujian (GForm/MS Form)</label>
                                     <input 
@@ -6251,7 +6283,6 @@ ANS: B`;
                                     />
                                     <p className="text-[10px] text-gray-400 mt-1">Jika diisi, peserta akan mengerjakan via form ini.</p>
                                 </div>
-                           </div>
 
                            {/* Right Column: Date & Session */}
                            <div className="space-y-3">
